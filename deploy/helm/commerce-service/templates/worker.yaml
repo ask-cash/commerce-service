@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "commerce.name" . }}-worker
+  labels:
+    {{- include "commerce.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      {{- include "commerce.selector" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "commerce.selector" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: worker
+          image: {{ include "commerce.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["worker"]
+          ports:
+            - {name: admin, containerPort: 9090}
+          envFrom:
+            {{- include "commerce.envFrom" . | nindent 12 }}
+          {{- include "commerce.probes" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+          securityContext:
+            {{- include "commerce.securityContext" . | nindent 12 }}

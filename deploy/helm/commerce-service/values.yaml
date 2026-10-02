@@ -1,0 +1,58 @@
+image:
+  repository: ghcr.io/alg0-labs/commerce-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Non-secret configuration -> ConfigMap (COMMERCE_* env vars).
+config:
+  COMMERCE_ENVIRONMENT: production
+  COMMERCE_LOG_FORMAT: json
+  COMMERCE_STRIPE__API_VERSION: "2025-09-30.clover"
+  COMMERCE_AUTH__ISSUER: cash
+  COMMERCE_AUTH__AUDIENCE: commerce-service
+  COMMERCE_DATABASE__MAX_CONNECTIONS: "10"
+  RUST_LOG: info,sqlx=warn
+
+# Secrets come from the cloud secret manager via External Secrets Operator,
+# same store as Cash.
+externalSecrets:
+  enabled: true
+  secretStoreRef: gcp-secret-store
+  remoteKeys:
+    COMMERCE_DATABASE__URL: commerce-database-url
+    COMMERCE_STRIPE__SECRET_KEY: commerce-stripe-secret-key
+    COMMERCE_STRIPE__WEBHOOK_SECRETS: commerce-stripe-webhook-secrets
+    COMMERCE_AUTH__PUBLIC_KEYS: commerce-auth-public-keys
+
+server:
+  replicas: 2
+  resources:
+    requests: {cpu: 100m, memory: 64Mi}
+    limits:   {cpu: "1", memory: 256Mi}
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+worker:
+  replicas: 2
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits:   {cpu: 500m, memory: 256Mi}
+
+# Only pods with these labels may reach the internal /v1 API.
+allowedCallers:
+  - matchLabels:
+      app.kubernetes.io/name: cash
+
+# Only the Stripe webhook path is public.
+ingress:
+  enabled: false
+  className: nginx
+  host: commerce.cash.example.com
+  annotations: {}
+  tls: []
+
+serviceMonitor:
+  enabled: true

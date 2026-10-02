@@ -1,0 +1,46 @@
+# Local stack: Postgres + migrate + server + worker.
+#   cp .env.example .env   # fill in the Stripe test key and Cash public key
+#   docker compose up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: commerce
+      POSTGRES_PASSWORD: commerce
+      POSTGRES_DB: commerce
+    ports: ["5433:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce"]
+      interval: 2s
+      retries: 20
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  migrate:
+    build: .
+    command: ["migrate"]
+    env_file: .env
+    environment: &db
+      COMMERCE_DATABASE__URL: postgres://commerce:commerce@postgres:5432/commerce
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  server:
+    build: .
+    command: ["server"]
+    env_file: .env
+    environment: *db
+    ports: ["8080:8080", "9090:9090"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+  worker:
+    build: .
+    command: ["worker"]
+    env_file: .env
+    environment: *db
+    ports: ["9091:9090"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+
+volumes:
+  pgdata:

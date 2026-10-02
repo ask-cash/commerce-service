@@ -1,0 +1,34 @@
+[package]
+name = "commerce-api"
+description = "HTTP adapter for commerce-service: internal /v1 API, Stripe webhooks, admin endpoints."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+commerce-app.workspace = true
+commerce-store.workspace = true
+commerce-stripe.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+metrics.workspace = true
+metrics-exporter-prometheus.workspace = true
+jsonwebtoken.workspace = true
+secrecy.workspace = true
+
+[dev-dependencies]
+http-body-util = "0.1"
+serde_json.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower = { workspace = true, features = ["util"] }
+
+[lints]
+workspace = true

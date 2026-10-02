@@ -1,0 +1,32 @@
+# Runs before every install/upgrade; a failed migration aborts the release
+# and leaves the old pods serving.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "commerce.name" . }}-migrate
+  labels:
+    {{- include "commerce.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        {{- include "commerce.selector" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: {{ include "commerce.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["migrate"]
+          envFrom:
+            {{- include "commerce.envFrom" . | nindent 12 }}
+          securityContext:
+            {{- include "commerce.securityContext" . | nindent 12 }}

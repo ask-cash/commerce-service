@@ -1,0 +1,6 @@
+apiVersion: v2
+name: commerce-service
+description: Payment infrastructure for Cash (Stripe) — API server, worker, migrations.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

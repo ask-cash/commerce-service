@@ -1,0 +1,19 @@
+[package]
+name = "commerce-domain"
+description = "Pure domain model for commerce-service: money, identifiers, state machines. No I/O."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

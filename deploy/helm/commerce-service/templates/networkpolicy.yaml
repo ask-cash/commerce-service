@@ -1,0 +1,26 @@
+# /v1 (port 8080) is reachable only from Cash pods and the ingress controller
+# (which exposes /webhooks/stripe alone). The admin port is reachable only
+# in-cluster for probes and Prometheus.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "commerce.name" . }}-server
+  labels:
+    {{- include "commerce.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "commerce.selector" . | nindent 6 }}
+      app.kubernetes.io/component: server
+  policyTypes: ["Ingress"]
+  ingress:
+    - ports: [{port: 8080}]
+      from:
+        {{- range .Values.allowedCallers }}
+        - podSelector:
+            {{- toYaml . | nindent 12 }}
+        {{- end }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+    - ports: [{port: 9090}]
